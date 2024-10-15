@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Morphisms Visualization</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #2c3e50;
+        }
+        .morphism-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        .card {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .card-header {
+            padding: 15px;
+            font-weight: bold;
+            text-align: center;
+            color: #fff;
+        }
+        .card-body {
+            padding: 15px;
+        }
+        .uppercase {
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+        .key {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .key-item {
+            display: flex;
+            align-items: center;
+            background-color: #fff;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .color-box {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            border-radius: 50%;
+        }
+        #filterInput {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1em;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Interactive Morphisms Visualization</h1>
+        
+        <input type="text" id="filterInput" placeholder="Filter morphisms...">
+        
+        <div class="key" id="colorKey"></div>
+        
+        <div class="morphism-cards" id="morphismCards"></div>
+    </div>
+
+    <script>
+        const relationships = [
+            { name: "Theory", color: "#1f77b4", description: "Blue" },
+            { name: "Relations", color: "#2ca02c", description: "Green" },
+            { name: "Cinema/Film", color: "#d62728", description: "Red" },
+            { name: "Characters/Titles", color: "#ff7f0e", description: "Orange" },
+            { name: "General", color: "#9467bd", description: "Purple" },
+            { name: "Critical/Challenging Relationships", color: "#e377c2", description: "Pink" },
+            { name: "Highlighting/Providing Relationships", color: "#7f7f7f", description: "Grey" },
+            { name: "Inspiring/Shaping Relationships", color: "#bcbd22", description: "Olive" },
+            { name: "Neutral Relationships", color: "#17becf", description: "Cyan" }
+        ];
+
+        const morphisms = [
+            { entity1: "PHENOMENOLOGY", relationship: "Develops Into", entity2: "POSTPHENOMENOLOGY", type: "Theory" },
+            { entity1: "POSTPHENOMENOLOGY", relationship: "Focuses on", entity2: "Mediation", type: "Theory" },
+            { entity1: "EMPIRICAL PHILOSOPHY", relationship: "Guides", entity2: "Postphenomenological Method", type: "Theory" },
+            { entity1: "Embodiment Relations", relationship: "Transforms", entity2: "Perceptual Experience", type: "Relations" },
+            { entity1: "Hermeneutic Relations", relationship: "Provides", entity2: "Interpretive Framework", type: "Highlighting/Providing Relationships" },
+            { entity1: "Alterity Relations", relationship: "Mimics", entity2: "Human Interaction", type: "Relations" },
+            { entity1: "Background Relations", relationship: "Shapes", entity2: "Environmental Context", type: "Inspiring/Shaping Relationships" },
+            { entity1: "Empirical Studies", relationship: "Informs", entity2: "Philosophical Reflection", type: "Relations" },
+            { entity1: "RELATIONAL ONTOLOGY", relationship: "Focuses on", entity2: "Mediation", type: "Theory" },
+            { entity1: "Conceptual Analysis", relationship: "Explores", entity2: "Impact of Technologies", type: "Theory" },
+            { entity1: "Multistability", relationship: "Highlights", entity2: "Non-neutrality of Technology", type: "Highlighting/Providing Relationships" },
+            { entity1: "Transparency", relationship: "Influences", entity2: "User Awareness", type: "Relations" },
+            { entity1: "Sedimentation", relationship: "Informs", entity2: "Present Experience", type: "Relations" },
+            { entity1: "Les Vampires", relationship: "Influences", entity2: "Irma Vep (1996)", type: "Cinema/Film" },
+            { entity1: "Irma Vep (1996)", relationship: "Reinterpreted As", entity2: "Irma Vep (2022)", type: "Cinema/Film" },
+            { entity1: "METAMODERNISM", relationship: "Explores", entity2: "Artistic Duality", type: "Theory" },
+            { entity1: "Alicia Vikander as Mira", relationship: "Navigates", entity2: "Blurred Boundaries", type: "Characters/Titles" },
+            { entity1: "Les Vampires", relationship: "Inspires", entity2: "Eisenstein's Works", type: "Inspiring/Shaping Relationships" },
+            { entity1: "Les Vampires", relationship: "Shapes", entity2: "Fritz Lang's Cinema", type: "Inspiring/Shaping Relationships" },
+            { entity1: "Les Vampires", relationship: "Forms", entity2: "Touchstone for Experimental", type: "Cinema/Film" },
+            { entity1: "French Silent Cinema", relationship: "Foundation For", entity2: "Modern Filmmaking", type: "Cinema/Film" },
+            { entity1: "Irma Vep", relationship: "Examines", entity2: "Artistic Reinvention", type: "Cinema/Film" },
+            { entity1: "Identity in Film", relationship: "Highlighted By", entity2: "Mira's Journey", type: "Highlighting/Providing Relationships" },
+            { entity1: "Metacommentary", relationship: "Critiques", entity2: "Globalized Filmmaking", type: "Critical/Challenging Relationships" },
+            { entity1: "Alicia Vikander as Mira", relationship: "Embodies", entity2: "Duality of Performance", type: "Characters/Titles" },
+            { entity1: "Cannes Un Regard", relationship: "Showcases", entity2: "Introspective Works", type: "Cinema/Film" },
+            { entity1: "Anatomy of a Fall", relationship: "Continues", entity2: "Cannes Tradition", type: "Cinema/Film" },
+            { entity1: "Megalopolis", relationship: "Anticipates", entity2: "Cinematic Ambition", type: "Cinema/Film" },
+            { entity1: "Schwarzbaum's Criticism", relationship: "Invites", entity2: "Reflection on Cinema", type: "Critical/Challenging Relationships" },
+            { entity1: "Collatz Conjecture", relationship: "Symbolizes", entity2: "Pattern in Chaos", type: "General" },
+            { entity1: "Kafka's Narratives", relationship: "Align With", entity2: "Absurdity in Irma Vep", type: "General" },
+            { entity1: "Murakami's 1Q84", relationship: "Resonates With", entity2: "Parallel Worlds in Irma Vep", type: "General" },
+            { entity1: "METAMODERNISM", relationship: "Oscillates", entity2: "Rigorous and Irreverent Cinema", type: "Theory" },
+            { entity1: "Assayas", relationship: "Balances", entity2: "Eccentricity and Commentary", type: "Characters/Titles" },
+            { entity1: "Artistic Eccentricity", relationship: "Defines", entity2: "Assayas' Style", type: "General" },
+            { entity1: "Metacommentary", relationship: "Shapes", entity2: "Irma Vep", type: "Inspiring/Shaping Relationships" },
+            { entity1: "Cannes Legacy", relationship: "Embodied By", entity2: "Assayas' Films", type: "Cinema/Film" },
+            { entity1: "Palme d'Or", relationship: "Inspires", entity2: "Debate", type: "Inspiring/Shaping Relationships" },
+            { entity1: "Robert De Niro", relationship: "Leads", entity2: "Diverse Jury", type: "Characters/Titles" },
+            { entity1: "Cannes", relationship: "Thrives On", entity2: "Unpredictability", type: "Cinema/Film" },
+            { entity1: "Philosophical Cinema", relationship: "Provokes", entity2: "Reflection", type: "Theory" },
+            { entity1: "Artistic Ambition", relationship: "Complicates", entity2: "Sincerity", type: "Critical/Challenging Relationships" },
+            { entity1: "Post-Ironic Culture", relationship: "Creates", entity2: "Tension", type: "General" },
+            { entity1: "Irma Vep", relationship: "Embodies", entity2: "Meta-Film", type: "Cinema/Film" },
+            { entity1: "Metamodern Condition", relationship: "Explored In", entity2: "Irma Vep", type: "Theory" },
+            { entity1: "Diegetic Moments", relationship: "Form", entity2: "Internal Story World", type: "Cinema/Film" },
+            { entity1: "Eidetic Moments", relationship: "Enhance", entity2: "Emotional Impact", type: "Cinema/Film" },
+            { entity1: "Esoteric References", relationship: "Connect To", entity2: "Cinematic History", type: "Cinema/Film" },
+            { entity1: "Genre Subversion", relationship: "Challenges", entity2: "Traditional Cinema", type: "Critical/Challenging Relationships" }
+        ];
+
+        function createMorphismCards() {
+            const cardsContainer = document.getElementById('morphismCards');
+            morphisms.forEach(morphism => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                
+                const header = document.createElement('div');
+                header.className = 'card-header';
+                header.textContent = morphism.relationship;
+                
+                const body = document.createElement('div');
+                body.className = 'card-body';
+                body.innerHTML = `
+                    <p>${morphism.entity1.toUpperCase() === morphism.entity1 ? `<span class="uppercase">${morphism.entity1}</span>` : morphism.entity1}</p>
+                    <p>${morphism.entity2.toUpperCase() === morphism.entity2 ? `<span class="uppercase">${morphism.entity2}</span>` : morphism.entity2}</p>
+                `;
+                
+                const relationshipType = relationships.find(r => r.name === morphism.type);
+                if (relationshipType) {
+                    header.style.backgroundColor = relationshipType.color;
+                }
+                
+                card.appendChild(header);
+                card.appendChild(body);
+                cardsContainer.appendChild(card);
+            });
+        }
+
+        function createColorKey() {
+            const keyDiv = document.getElementById('colorKey');
+            relationships.forEach(relationship => {
+                const keyItem = document.createElement('div');
+                keyItem.className = 'key-item';
+                
+                const colorBox = document.createElement('div');
+                colorBox.className = 'color-box';
+                colorBox.style.backgroundColor = relationship.color;
+                
+                const label = document.createElement('span');
+                label.textContent = relationship.name;
+                
+                keyItem.appendChild(colorBox);
+                keyItem.appendChild(label);
+                keyDiv.appendChild(keyItem);
+            });
+        }
+
+        function setupFilter() {
+            const filterInput = document.getElementById('filterInput');
+            filterInput.addEventListener('input', function() {
+                const filterValue = this.value.toLowerCase();
+                const cards = document.querySelectorAll('.card');
+                cards.forEach(card => {
+                    const cardText = card.textContent.toLowerCase();
+                    if (cardText.includes(filterValue)) {
+                        card.classList.remove('hidden');
+                    } else {
+                        card.classList.add('hidden');
+                    }
+                });
+            });
+        }
+
+        createMorphismCards();
+        createColorKey();
+        setupFilter();
+    </script>
+</body>
+</html>
